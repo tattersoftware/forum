@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests\Feature;
+
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\Test\DatabaseTestTrait;
 use CodeIgniter\Test\FeatureTestTrait;
@@ -16,7 +18,7 @@ final class HomeTest extends TestCase
     protected $migrateOnce = true;
     protected $seedOnce    = true;
 
-    public function testRootShowsHomePage()
+    public function testRootShowsHomePage(): void
     {
         $result = $this->get('/');
 
@@ -24,7 +26,7 @@ final class HomeTest extends TestCase
         $result->assertSee('The small framework with powerful features', 'h2');
     }
 
-    public function testFourOhFour()
+    public function testFourOhFour(): void
     {
         $this->expectException(PageNotFoundException::class);
 
