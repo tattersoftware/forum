@@ -28,7 +28,7 @@
     "prefer-stable": true,
     "autoload": {
         "psr-4": {
-            "Organization\\Name\\": "src"
+            "Domain\\": "domain"
         },
         "exclude-from-classmap": [
             "**/Database/Migrations/**"
