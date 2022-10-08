@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Support;
 
 use CodeIgniter\Test\CIUnitTestCase;
+use Faker\Factory;
+use Faker\Generator;
 use Nexus\PHPUnit\Extension\Expeditable;
 
 /**
@@ -34,4 +36,13 @@ abstract class TestCase extends CIUnitTestCase
      * @var array|string|null
      */
     protected $namespace;
+
+    protected Generator $faker;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->faker = Factory::create();
+    }
 }

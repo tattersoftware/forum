@@ -41,6 +41,7 @@ return static function (RectorConfig $rectorConfig): void {
     // The paths to refactor (can also be supplied with CLI arguments)
     $rectorConfig->paths([
         __DIR__ . '/app/',
+        __DIR__ . '/domain/',
         __DIR__ . '/tests/',
     ]);
 

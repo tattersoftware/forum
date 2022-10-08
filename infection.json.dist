@@ -1,7 +1,8 @@
 {
 	"source": {
 		"directories": [
-			"app/"
+			"app/",
+			"domain/"
 		],
 		"excludes": [
 			"Config",
