@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * The goal of this file is to allow developers a location
  * where they can overwrite core procedural functions and
