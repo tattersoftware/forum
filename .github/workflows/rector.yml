@@ -62,6 +62,4 @@ jobs:
           fi
 
       - name: Analyze for refactoring
-        run: |
-          composer global require --dev rector/rector:^0.14
-          rector process --dry-run --no-progress-bar
+        run: vendor/bin/rector process --dry-run --no-progress-bar
