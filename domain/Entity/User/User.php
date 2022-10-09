@@ -21,16 +21,17 @@ final class User
     {
         return new self(
             UserId::fromInt(Mapping::getId($array, 'id')),
+            Mapping::getString($array, 'username'),
             Email::fromString(Mapping::getString($array, 'email')),
-            // Mapping::getString($array, 'handle'),
-            'handle',
+            Mapping::getString($array, 'avatar'),
         );
     }
 
     public function __construct(
         public readonly UserId $id,
-        private Email $email,
         private string $handle,
+        private Email $email,
+        private string $avatar,
     ) {
     }
 
@@ -40,9 +41,10 @@ final class User
     public function toArray(): array
     {
         return [
-            'id'     => $this->id->toInt(),
-            'email'  => $this->email->__toString(),
-            'handle' => $this->handle,
+            'id'       => $this->id->toInt(),
+            'username' => $this->handle,
+            'email'    => $this->email->__toString(),
+            'avatar'   => $this->avatar,
         ];
     }
 }

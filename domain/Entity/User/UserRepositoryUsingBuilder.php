@@ -8,7 +8,6 @@ use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Events\Events;
 use CodeIgniter\Shield\Authentication\Authenticators\Session;
 use Domain\Entity\EntityNotFound;
-use UnexpectedValueException;
 
 final class UserRepositoryUsingBuilder implements UserRepository
 {
@@ -22,7 +21,8 @@ final class UserRepositoryUsingBuilder implements UserRepository
     public function find(UserId $id): User
     {
         $result = $this->builder
-            ->select('users.*, auth_identities.secret as email')
+            ->select('users.id, users.username, profiles.avatar, auth_identities.secret as email')
+            ->join('profiles', 'profiles.user_id = users.id')
             ->join('auth_identities', 'auth_identities.user_id = users.id')
             ->where('users.id', $id->toInt())
             ->where('auth_identities.type', Session::ID_TYPE_EMAIL_PASSWORD)
@@ -44,28 +44,20 @@ final class UserRepositoryUsingBuilder implements UserRepository
             ->get()
             ->getRowArray();
 
-        if ($result === null) {
-            throw new UnexpectedValueException('Unable to locate the next ID for ' . User::class);
-        }
-
+        // SELECT MAX will return $result['id'] = null so casting to int works as expected
         return UserId::fromInt((int) $result['id'] + 1);
     }
 
     public function save(User $user): void
     {
-        // Handle email separate
-        $data  = $user->toArray();
-        $email = $data['email'];
-        unset($data['email']);
-
         $exists = (bool) $this->builder
             ->select('1')
-            ->where('users.id', $data['id'])
+            ->where('users.id', $user->id->__toString())
             ->limit(1)
             ->get()
             ->getRowArray();
 
-        $exists ? $this->update($data, $email) : $this->insert($data, $email);
+        $exists ? $this->update($user) : $this->insert($user);
 
         // Release domain events
         foreach ($user->releaseEvents() as $event) {
@@ -73,34 +65,63 @@ final class UserRepositoryUsingBuilder implements UserRepository
         }
     }
 
-    /**
-     * @param array<string, scalar|null> $data
-     */
-    private function insert(array $data, string $email): void
+    private function insert(User $user): void
     {
-        $this->builder->insert($data);
+        $data = $user->toArray();
+
+        // `users`
+        $this->builder->insert([
+            'id'       => $data['id'],
+            'username' => $data['username'],
+            'active'   => 1,
+        ]);
+
+        // `auth_identities`
         $this->builder
             ->db()
             ->table('auth_identities')
             ->insert([
                 'user_id' => $data['id'],
                 'type'    => Session::ID_TYPE_EMAIL_PASSWORD,
-                'secret'  => $email,
+                'secret'  => $data['email'],
+            ]);
+
+        // `profiles`
+        $this->builder
+            ->db()
+            ->table('profiles')
+            ->insert([
+                'user_id' => $data['id'],
+                'avatar'  => $data['avatar'],
             ]);
     }
 
-    /**
-     * @param array<string, scalar|null> $data
-     */
-    private function update(array $data, string $email): void
+    private function update(User $user): void
     {
-        $this->builder->update($data, ['id' => $data['id']]);
+        $data = $user->toArray();
+
+        // `users`
+        $this->builder->update([
+            'username' => $data['username'],
+        ], ['id' => $data['id']]);
+
+        // `auth_identities`
         $this->builder
             ->db()
             ->table('auth_identities')
-            ->update(['secret' => $email], [
+            ->update([
+                'secret' => $data['email'],
+            ], [
                 'user_id' => $data['id'],
                 'type'    => Session::ID_TYPE_EMAIL_PASSWORD,
             ]);
+
+        // `profiles`
+        $this->builder
+            ->db()
+            ->table('profiles')
+            ->update([
+                'avatar' => $data['avatar'],
+            ], ['user_id' => $data['id']]);
     }
 }
