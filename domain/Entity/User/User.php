@@ -20,7 +20,7 @@ final class User
     public static function fromArray(array $array): self
     {
         return new self(
-            UserId::fromInt(Mapping::getId($array, 'id')),
+            UserId::fromInt(Mapping::getIntId($array, 'id')),
             Mapping::getString($array, 'username'),
             Email::fromString(Mapping::getString($array, 'email')),
             Mapping::getString($array, 'avatar'),

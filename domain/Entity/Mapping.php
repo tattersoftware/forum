@@ -9,6 +9,17 @@ use Webmozart\Assert\Assert;
 
 final class Mapping
 {
+    /**
+     * @return list
+     */
+    public static function getList(array $data, string $key): array
+    {
+        Assert::keyExists($data, $key);
+        Assert::isList($data[$key]);
+
+        return $data[$key];
+    }
+
     public static function getBool(array $data, string $key): bool
     {
         Assert::keyExists($data, $key);
@@ -17,7 +28,7 @@ final class Mapping
         return (bool) $data[$key];
     }
 
-    public static function getId(array $data, string $key): int
+    public static function getIntId(array $data, string $key): int
     {
         Assert::keyExists($data, $key);
         Assert::integerish($data[$key]);

@@ -17,7 +17,6 @@ final class UserId
 
     private function __construct(private int $id)
     {
-        $this->id = $id;
     }
 
     public function toInt(): int
