@@ -4,26 +4,20 @@ declare(strict_types=1);
 
 namespace Domain\Entity\Post;
 
-use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Events\Events;
 use Domain\Entity\EntityNotFound;
 use Domain\Entity\UlidBuilderRepository;
-use Symfony\Component\Uid\Factory\UlidFactory;
 
 final class PostRepositoryUsingBuilder extends UlidBuilderRepository implements PostRepository
 {
-    public function __construct(
-        private BaseBuilder $builder,
-        private UlidFactory $ulids,
-    ) {
-    }
+    private const TABLE = 'posts';
 
     /**
      * @throws EntityNotFound
      */
     public function find(PostId $id): Post
     {
-        if (null === $result = $this->fetch((string) $id)) {
+        if (null === $result = $this->fetch(self::TABLE, $id)) {
             throw EntityNotFound::ofType(Post::class, (string) $id);
         }
 
@@ -37,12 +31,12 @@ final class PostRepositoryUsingBuilder extends UlidBuilderRepository implements 
 
     public function save(Post $post): void
     {
-        if ($this->exists((string) $post->id)) {
-            $this->builder->update($post->toArray(), [
+        if ($this->exists(self::TABLE, $post->id)) {
+            $this->database->table(self::TABLE)->update($post->toArray(), [
                 'ulid' => (string) $post->id,
             ]);
         } else {
-            $this->builder->insert($post->toArray());
+            $this->database->table(self::TABLE)->insert($post->toArray());
 
             $event = new PostCreated($post->id, $post->author);
             Events::trigger((string) $event, $event);

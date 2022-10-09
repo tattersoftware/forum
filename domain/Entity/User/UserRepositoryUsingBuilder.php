@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Domain\Entity\User;
 
-use CodeIgniter\Database\BaseBuilder;
+use CodeIgniter\Database\ConnectionInterface;
 use CodeIgniter\Events\Events;
 use CodeIgniter\Shield\Authentication\Authenticators\Session;
 use Domain\Entity\EntityNotFound;
 
 final class UserRepositoryUsingBuilder implements UserRepository
 {
-    public function __construct(private BaseBuilder $builder)
+    private const TABLE = 'users';
+
+    public function __construct(private ConnectionInterface $database)
     {
     }
 
@@ -20,7 +22,8 @@ final class UserRepositoryUsingBuilder implements UserRepository
      */
     public function find(UserId $id): User
     {
-        $result = $this->builder
+        $result = $this->database
+            ->table(self::TABLE)
             ->select('users.id, users.username, profiles.avatar, auth_identities.secret as email')
             ->join('profiles', 'profiles.user_id = users.id')
             ->join('auth_identities', 'auth_identities.user_id = users.id')
@@ -39,7 +42,8 @@ final class UserRepositoryUsingBuilder implements UserRepository
 
     public function nextId(): UserId
     {
-        $result = $this->builder
+        $result = $this->database
+            ->table(self::TABLE)
             ->selectMax('id', 'id')
             ->get()
             ->getRowArray();
@@ -50,7 +54,8 @@ final class UserRepositoryUsingBuilder implements UserRepository
 
     public function save(User $user): void
     {
-        $exists = (bool) $this->builder
+        $exists = (bool) $this->database
+            ->table(self::TABLE)
             ->select('1')
             ->where('users.id', $user->id->__toString())
             ->limit(1)
@@ -70,15 +75,14 @@ final class UserRepositoryUsingBuilder implements UserRepository
         $data = $user->toArray();
 
         // `users`
-        $this->builder->insert([
+        $this->database->table(self::TABLE)->insert([
             'id'       => $data['id'],
             'username' => $data['username'],
             'active'   => 1,
         ]);
 
         // `auth_identities`
-        $this->builder
-            ->db()
+        $this->database
             ->table('auth_identities')
             ->insert([
                 'user_id' => $data['id'],
@@ -87,8 +91,7 @@ final class UserRepositoryUsingBuilder implements UserRepository
             ]);
 
         // `profiles`
-        $this->builder
-            ->db()
+        $this->database
             ->table('profiles')
             ->insert([
                 'user_id' => $data['id'],
@@ -101,13 +104,12 @@ final class UserRepositoryUsingBuilder implements UserRepository
         $data = $user->toArray();
 
         // `users`
-        $this->builder->update([
+        $this->database->table(self::TABLE)->update([
             'username' => $data['username'],
         ], ['id' => $data['id']]);
 
         // `auth_identities`
-        $this->builder
-            ->db()
+        $this->database
             ->table('auth_identities')
             ->update([
                 'secret' => $data['email'],
@@ -117,8 +119,7 @@ final class UserRepositoryUsingBuilder implements UserRepository
             ]);
 
         // `profiles`
-        $this->builder
-            ->db()
+        $this->database
             ->table('profiles')
             ->update([
                 'avatar' => $data['avatar'],

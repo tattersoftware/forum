@@ -4,32 +4,25 @@ declare(strict_types=1);
 
 namespace Domain\Entity\Board;
 
-use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Events\Events;
 use Domain\Entity\EntityNotFound;
 use Domain\Entity\UlidBuilderRepository;
-use Symfony\Component\Uid\Factory\UlidFactory;
 
 final class BoardRepositoryUsingBuilder extends UlidBuilderRepository implements BoardRepository
 {
-    public function __construct(
-        private BaseBuilder $builder,
-        private UlidFactory $ulids,
-    ) {
-    }
+    private const TABLE = 'boards';
 
     /**
      * @throws EntityNotFound
      */
     public function find(BoardId $id): Board
     {
-        if (null === $result = $this->fetch((string) $id)) {
+        if (null === $result = $this->fetch('boards', $id)) {
             throw EntityNotFound::ofType(Board::class, (string) $id);
         }
 
         // Get the topics
-        $rows = $this->builder
-            ->db()
+        $rows = $this->database
             ->table('topics')
             ->where('board_ulid', (string) $id)
             ->get()
@@ -52,7 +45,7 @@ final class BoardRepositoryUsingBuilder extends UlidBuilderRepository implements
 
     public function save(Board $board): void
     {
-        $this->exists((string) $board->id)
+        $this->exists(self::TABLE, $board->id)
             ? $this->update($board)
             : $this->insert($board);
 
@@ -64,11 +57,10 @@ final class BoardRepositoryUsingBuilder extends UlidBuilderRepository implements
 
     public function insert(Board $board): void
     {
-        $this->builder->insert($board->toArray());
+        $this->database->table(self::TABLE)->insert($board->toArray());
 
         foreach ($board->getTopics() as $topic) {
-            $this->builder
-                ->db()
+            $this->database
                 ->table('topics')
                 ->insert($topic->toArray());
         }
@@ -76,7 +68,7 @@ final class BoardRepositoryUsingBuilder extends UlidBuilderRepository implements
 
     public function update(Board $board): void
     {
-        $this->builder->update($board->toArray(), [
+        $this->database->table(self::TABLE)->update($board->toArray(), [
             'ulid' => (string) $board->id,
         ]);
 
@@ -85,8 +77,7 @@ final class BoardRepositoryUsingBuilder extends UlidBuilderRepository implements
         foreach ($board->getTopics() as $topic) {
             $topicUlids[] = (string) $topic->id;
 
-            $this->builder
-                ->db()
+            $this->database
                 ->table('topics')
                 ->update($topic->toArray(), [
                     'ulid' => (string) $topic->id,

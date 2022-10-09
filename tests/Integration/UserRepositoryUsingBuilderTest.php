@@ -29,9 +29,7 @@ final class UserRepositoryUsingBuilderTest extends TestCase
     {
         parent::setUp();
 
-        $builder = db_connect()->table('users');
-
-        $this->repository = new UserRepositoryUsingBuilder($builder);
+        $this->repository = new UserRepositoryUsingBuilder($this->db);
     }
 
     /**

@@ -4,27 +4,33 @@ declare(strict_types=1);
 
 namespace Domain\Entity;
 
-use CodeIgniter\Database\BaseBuilder;
+use CodeIgniter\Database\ConnectionInterface;
+use Symfony\Component\Uid\Factory\UlidFactory;
 
-/**
- * @property BaseBuilder $builder
- */
 abstract class UlidBuilderRepository
 {
-    protected function fetch(string $ulid): ?array
+    public function __construct(
+        protected ConnectionInterface $database,
+        protected UlidFactory $ulids,
+    ) {
+    }
+
+    protected function fetch(string $table, UlidId $id): ?array
     {
-        return $this->builder
-            ->where('ulid', $ulid)
+        return $this->database
+            ->table($table)
+            ->where('ulid', (string) $id)
             ->limit(1)
             ->get()
             ->getRowArray();
     }
 
-    protected function exists(string $ulid): bool
+    protected function exists(string $table, UlidId $id): bool
     {
-        return (bool) $this->builder
+        return (bool) $this->database
+            ->table($table)
             ->select('1')
-            ->where('ulid', $ulid)
+            ->where('ulid', (string) $id)
             ->limit(1)
             ->get()
             ->getRowArray();
