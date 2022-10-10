@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Config;
 
+use App\Container\Container;
+
 // Create a new instance of our RouteCollection class.
-$routes = Services::routes();
+$routes    = Services::routes();
+$container = Container::getInstance();
 
 // Load the system's routing file first, so that the app and ENVIRONMENT
 // can override as needed.
@@ -37,9 +40,7 @@ $routes->setAutoRoute(false);
 
 // We get a performance increase by specifying the default
 // route since we don't have to scan directories.
-$routes->get('/', 'Home::index');
-
-service('auth')->routes($routes);
+$routes->get('/(:num)', static fn ($id) => $container->homeController()->index($id));
 
 /*
  * --------------------------------------------------------------------

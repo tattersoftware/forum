@@ -10,6 +10,7 @@ use CodeIgniter\Database\ConnectionInterface;
 use Config\Database;
 use Domain\Entity\User\UserRepository;
 use Domain\Entity\User\UserRepositoryUsingBuilder;
+use RuntimeException;
 
 abstract class Container
 {
@@ -18,28 +19,39 @@ abstract class Container
         static $instance;
 
         if (! isset($instance)) {
-            $environment = env('CI_ENVIRONMENT', 'production');
-            $class       = '\\App\\Container\\' . ucfirst(strtolower($environment)) . 'Container';
-            $instance    = new $class();
+            switch (env('CI_ENVIRONMENT', 'production')) {
+                case 'development':
+                    $instance = new DevelopmentContainer();
+                    break;
+                case 'production':
+                    $instance = new ProductionContainer();
+                    break;
+                case 'testing':
+                    $instance = new TestingContainer();
+                    break;
+                default:
+                    throw new RuntimeException('The application environment is not set correctly.');
+            }
         }
 
         return $instance;
     }
-
-    public function home(): Home {
-        return new Home($this->userRepository());
+    
+    protected function __construct()
+    {
     }
 
-    public function commandRunner(): CommandRunner {
-        return new CommandRunner();
+    public function homeController(): Home
+    {
+        return new Home($this->userRepository());
     }
 
     protected function userRepository(): UserRepository
     {
-        return new UserRepositoryUsingBuilder(Database::connect());
+        return new UserRepositoryUsingBuilder($this->database());
     }
 
-    protected function connection(): ConnectionInterface
+    protected function database(): ConnectionInterface
     {
         return Database::connect();
     }
