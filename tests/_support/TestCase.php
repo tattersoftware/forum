@@ -4,7 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use App\Container\CodeIgniter;
+use App\Container\Container;
 use CodeIgniter\Test\CIUnitTestCase;
+use Config\App;
+use Config\Autoload;
+use Config\Modules;
+use Config\Services;
 use Faker\Factory;
 use Faker\Generator;
 use Nexus\PHPUnit\Extension\Expeditable;
@@ -44,5 +50,20 @@ abstract class TestCase extends CIUnitTestCase
         parent::setUp();
 
         $this->faker = Factory::create();
+    }
+
+    /**
+     * Ensures our container is used during testing.
+     *
+     * @return CodeIgniter
+     */
+    protected function createApplication()
+    {
+        Services::autoloader()->initialize(new Autoload(), new Modules());
+
+        $app = new CodeIgniter(new App(), Container::getInstance());
+        $app->initialize();
+
+        return $app;
     }
 }

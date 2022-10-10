@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Config;
 
+use App\Container\CodeIgniter;
+use App\Container\Container;
 use CodeIgniter\Config\BaseService;
 
 /**
@@ -21,14 +23,19 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
-    /*
-     * public static function example($getShared = true)
-     * {
-     *     if ($getShared) {
-     *         return static::getSharedInstance('example');
-     *     }
+    /**
+     * CodeIgniter, the core of the framework.
      *
-     *     return new \CodeIgniter\Example();
-     * }
+     * @return CodeIgniter
      */
+    public static function codeigniter(?App $config = null, bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('codeigniter', $config);
+        }
+
+        $config ??= config('App');
+
+        return new CodeIgniter($config, Container::getInstance());
+    }
 }
