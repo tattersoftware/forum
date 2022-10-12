@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Domain\Entity\Board;
 
 use CodeIgniter\Events\Events;
+use CodeIgniter\I18n\Time;
 use Domain\Entity\EntityNotFound;
 use Domain\Entity\UlidBuilderRepository;
 
@@ -25,6 +26,7 @@ final class BoardRepositoryUsingBuilder extends UlidBuilderRepository implements
         $rows = $this->database
             ->table('topics')
             ->where('board_ulid', (string) $id)
+            ->where('deleted_at IS NULL')
             ->get()
             ->getResultArray();
 
@@ -79,9 +81,13 @@ final class BoardRepositoryUsingBuilder extends UlidBuilderRepository implements
 
             $this->database
                 ->table('topics')
-                ->update($topic->toArray(), [
-                    'ulid' => (string) $topic->id,
-                ]);
+                ->where('ulid', (string) $topic->id)
+                ->update($topic->toArray());
         }
+
+        $this->database
+            ->table('topics')
+            ->whereNotIn('ulid', $topicUlids)
+            ->update(['deleted_at' => (string) Time::now()]);
     }
 }

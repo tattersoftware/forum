@@ -20,6 +20,7 @@ abstract class UlidBuilderRepository
         return $this->database
             ->table($table)
             ->where('ulid', (string) $id)
+            ->where('deleted_at IS NULL')
             ->limit(1)
             ->get()
             ->getRowArray();
@@ -31,6 +32,7 @@ abstract class UlidBuilderRepository
             ->table($table)
             ->select('1')
             ->where('ulid', (string) $id)
+            ->where('deleted_at IS NULL')
             ->limit(1)
             ->get()
             ->getRowArray();

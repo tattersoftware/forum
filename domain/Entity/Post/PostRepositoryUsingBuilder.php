@@ -32,11 +32,15 @@ final class PostRepositoryUsingBuilder extends UlidBuilderRepository implements 
     public function save(Post $post): void
     {
         if ($this->exists(self::TABLE, $post->id)) {
-            $this->database->table(self::TABLE)->update($post->toArray(), [
-                'ulid' => (string) $post->id,
-            ]);
+            $this->database
+                ->table(self::TABLE)
+                ->where('ulid', (string) $post->id)
+                ->where('deleted_at IS NULL')
+                ->update($post->toArray());
         } else {
-            $this->database->table(self::TABLE)->insert($post->toArray());
+            $this->database
+                ->table(self::TABLE)
+                ->insert($post->toArray());
 
             $event = new PostCreated($post->id, $post->author);
             Events::trigger((string) $event, $event);

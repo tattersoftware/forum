@@ -29,6 +29,7 @@ final class UserRepositoryUsingBuilder implements UserRepository
             ->join('auth_identities', 'auth_identities.user_id = users.id')
             ->where('users.id', $id->toInt())
             ->where('auth_identities.type', Session::ID_TYPE_EMAIL_PASSWORD)
+            ->where('users.deleted_at IS NULL')
             ->limit(1)
             ->get()
             ->getRowArray();
@@ -57,7 +58,8 @@ final class UserRepositoryUsingBuilder implements UserRepository
         $exists = (bool) $this->database
             ->table(self::TABLE)
             ->select('1')
-            ->where('users.id', $user->id->__toString())
+            ->where('id', (string) $user->id)
+            ->where('deleted_at IS NULL')
             ->limit(1)
             ->get()
             ->getRowArray();
@@ -104,25 +106,23 @@ final class UserRepositoryUsingBuilder implements UserRepository
         $data = $user->toArray();
 
         // `users`
-        $this->database->table(self::TABLE)->update([
-            'username' => $data['username'],
-        ], ['id' => $data['id']]);
+        $this->database
+            ->table(self::TABLE)
+            ->where('id', $data['id'])
+            ->where('deleted_at IS NULL')
+            ->update(['username' => $data['username']]);
 
         // `auth_identities`
         $this->database
             ->table('auth_identities')
-            ->update([
-                'secret' => $data['email'],
-            ], [
-                'user_id' => $data['id'],
-                'type'    => Session::ID_TYPE_EMAIL_PASSWORD,
-            ]);
+            ->where('user_id', $data['id'])
+            ->where('type', Session::ID_TYPE_EMAIL_PASSWORD)
+            ->update(['secret' => $data['email']]);
 
         // `profiles`
         $this->database
             ->table('profiles')
-            ->update([
-                'avatar' => $data['avatar'],
-            ], ['user_id' => $data['id']]);
+            ->where('user_id', $data['id'])
+            ->update(['avatar' => $data['avatar']]);
     }
 }
